@@ -1,0 +1,33 @@
+# /etc/systemd/system/bambu-bridge.service
+
+[Unit]
+Description=Bambu Lab VLAN Discovery Bridge (broadcast forwarder)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# change this path to wherever you keep the script
+ExecStart=/usr/bin/python3 /opt/bambu-bridge/bambu-bridge.py --quiet
+WorkingDirectory=/opt/bambu-bridge
+Restart=always
+RestartSec=5
+# Optional: run as non-root if you prefer (script only needs CAP_NET_RAW)
+# User=bambu
+# Group=bambu
+# CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+# AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+
+# Hardening (optional but recommended)
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/bambu-bridge
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
