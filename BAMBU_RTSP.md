@@ -34,7 +34,7 @@ sudo apt install -y golang-go git ffmpeg
 git clone https://github.com/AlexxIT/go2rtc.git
 cd go2rtc
 go mod download  # Fetch dependencies if needed
-go build -o go2rtc main.go
+CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath -tags "exclude_alsa exclude_v4l2"
 ```
 
 ### Install Binary
