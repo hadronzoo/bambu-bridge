@@ -46,10 +46,10 @@ sudo chmod +x /opt/bambu-bridge/bambu-bridge.py
 sudo nano /opt/bambu-bridge/bambu-bridge.py
 ```
 
-Change these two lines near the top of the script to match your actual interface names:
-```python
-SOURCE_IFACE = "lan1.50"   # interface where the printer lives
-TARGET_IFACE = "lan1.10"   # interface where your PC/phone lives
+Set your interface names via environment variables, or edit the defaults near the top of the script:
+```bash
+export SOURCE_IFACE="lan1.50"   # interface where the printer lives
+export TARGET_IFACE="lan1.10"   # interface where your PC/phone lives
 ```
 
 ### 3. Run forever
@@ -68,8 +68,59 @@ nohup /usr/bin/python3 /opt/bambu-bridge/bambu-bridge.py --quiet &
 # or add to /etc/rc.local, startup script, etc.
 ```
 
-#### Option C – Docker (if you prefer containers)
-See `docker-run.sh` in this repo.
+#### Option C – Docker
+
+The image is published to GitHub Container Registry for `linux/amd64` and `linux/arm64`.
+
+```bash
+docker run -d \
+  --name bambu-bridge \
+  --restart unless-stopped \
+  --network host \
+  --cap-add NET_RAW \
+  --cap-add NET_ADMIN \
+  -e SOURCE_IFACE=lan1.50 \
+  -e TARGET_IFACE=lan1.10 \
+  ghcr.io/hadronzoo/bambu-bridge:main
+```
+
+**Required flags:**
+
+| Flag | Why |
+|------|-----|
+| `--network host` | The container must see the host's VLAN interfaces directly. Bridge/overlay networking will not work. |
+| `--cap-add NET_RAW` | Required to open a raw packet socket for capturing broadcast traffic. |
+| `--cap-add NET_ADMIN` | Required to bind sockets to specific network interfaces. |
+
+**Environment variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SOURCE_IFACE` | `lan1.50` | Network interface on the **printer** VLAN. |
+| `TARGET_IFACE` | `lan1.10` | Network interface on the **client** VLAN (where Bambu Studio runs). |
+| `LOG_LEVEL` | *(empty — normal)* | Set to `quiet` for status messages only, or `verbose` for full hex dumps. |
+
+**View logs:**
+
+```bash
+docker logs -f bambu-bridge
+```
+
+**Docker Compose example:**
+
+```yaml
+services:
+  bambu-bridge:
+    image: ghcr.io/hadronzoo/bambu-bridge:main
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - SOURCE_IFACE=lan1.50
+      - TARGET_IFACE=lan1.10
+```
 
 ### Common setups & interface names
 
