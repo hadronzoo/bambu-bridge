@@ -8,7 +8,7 @@ COPY bambu-bridge.py .
 ENV SOURCE_IFACE=lan1.50
 # Client-side VLAN interface (where PCs/phones live)
 ENV TARGET_IFACE=lan1.10
-# Log verbosity: set to "quiet" or "verbose" (default: normal)
-ENV LOG_LEVEL=""
+# Standard Python log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+ENV LOG_LEVEL=INFO
 
 ENTRYPOINT ["python3", "bambu-bridge.py"]

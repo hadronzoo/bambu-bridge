@@ -28,19 +28,7 @@ BAMBU_PORTS: Set[int] = {2021, 1900}
 BROADCAST_ADDR = "255.255.255.255"
 BAMBU_MAGIC = b"urn:bambulab-com:device:3dprinter"
 
-# logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s: %(message)s",
-    datefmt="%H:%M:%S",
-    stream=sys.stderr,
-)
 logger = logging.getLogger("bambu-bridge")
-
-# add status level
-logging.STATUS = 25
-logging.addLevelName(logging.STATUS, "STATUS")
-logging.Logger.status = lambda self, msg, *a, **kw: self.log(logging.STATUS, msg, *a, **kw)
 
 capture_socket: socket.socket | None = None
 
@@ -55,7 +43,7 @@ def hexdump(data: bytes) -> str:
     return "\n".join(lines)
 
 def signal_handler(signum, frame) -> None:
-    logger.status("Shutting down gracefully...")
+    logger.info("Shutting down gracefully...")
     if capture_socket:
         capture_socket.close()
     sys.exit(0)
@@ -67,22 +55,24 @@ def main() -> None:
         description="Bambu Lab VLAN Discovery Bridge — forwards printer broadcasts"
     )
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-q", "--quiet",   action="store_true", help="Suppress all output except critical errors and status messages")
+    group.add_argument("-q", "--quiet",   action="store_true", help="Suppress all output except errors")
     group.add_argument("-v", "--verbose", action="store_true", help="Show detailed packet information including full hex dump")
     args = parser.parse_args()
 
-    # set logging level (CLI flags take precedence over LOG_LEVEL env var)
-    log_level_env = os.environ.get("LOG_LEVEL", "").lower()
+    # CLI flags take precedence over LOG_LEVEL env var
     if args.quiet:
-        logger.setLevel(logging.STATUS)  # status level is always visible
+        level = logging.WARNING
     elif args.verbose:
-        logger.setLevel(logging.DEBUG)
-    elif log_level_env == "quiet":
-        logger.setLevel(logging.STATUS)
-    elif log_level_env == "verbose":
-        logger.setLevel(logging.DEBUG)
+        level = logging.DEBUG
     else:
-        logger.setLevel(logging.INFO)
+        level = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s: %(message)s",
+        datefmt="%H:%M:%S",
+        stream=sys.stderr,
+    )
 
     signal.signal(signal.SIGINT,  signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
@@ -97,8 +87,7 @@ def main() -> None:
         logger.critical("Cannot bind to interface '%s': %s", SOURCE_IFACE, e)
         sys.exit(1)
 
-    logger.status("Bambu bridge started: %s -> %s BROADCAST", SOURCE_IFACE, TARGET_IFACE)
-    logger.status("Press Ctrl+C to stop")
+    logger.info("Bambu bridge started: %s -> %s BROADCAST", SOURCE_IFACE, TARGET_IFACE)
 
     count = 0
     last_printer_ip = None
@@ -137,14 +126,14 @@ def main() -> None:
         if BAMBU_MAGIC not in payload:
             continue
 
-        # status: printer (re)discovered
+        # printer (re)discovered
         src_ip = socket.inet_ntoa(iph[8])
         if src_ip != last_printer_ip:
-            logger.status("Bambu printer (re)discovered: %s", src_ip)
+            logger.info("Bambu printer (re)discovered: %s", src_ip)
             last_printer_ip = src_ip
 
         count += 1
-        logger.info("[%5d] %s:%d -> %s:%d (%d bytes)", count, src_ip, src_port, BROADCAST_ADDR, dst_port, len(payload))
+        logger.debug("[%5d] %s:%d -> %s:%d (%d bytes)", count, src_ip, src_port, BROADCAST_ADDR, dst_port, len(payload))
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("\n%s", hexdump(payload))
@@ -163,4 +152,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

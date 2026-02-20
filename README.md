@@ -98,7 +98,7 @@ docker run -d \
 |----------|---------|-------------|
 | `SOURCE_IFACE` | `lan1.50` | Network interface on the **printer** VLAN. |
 | `TARGET_IFACE` | `lan1.10` | Network interface on the **client** VLAN (where Bambu Studio runs). |
-| `LOG_LEVEL` | *(empty — normal)* | Set to `quiet` for status messages only, or `verbose` for full hex dumps. |
+| `LOG_LEVEL` | `INFO` | Standard Python log level: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`. |
 
 **View logs:**
 
