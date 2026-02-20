@@ -156,9 +156,8 @@ sudo journalctl -u bambu-bridge -f
 
 You should see lines like:
 ```
-Bambu bridge started: lan1.50 → lan1.10 BROADCAST
-Bambu printer (re)discovered: 192.168.50.42
-[    1] 192.168.50.42:2021 → 255.255.255.255:2021 (429 bytes)
+12:00:01 INFO: Bambu bridge started: lan1.50 -> lan1.10 BROADCAST
+12:00:05 INFO: Bambu printer (re)discovered: 192.168.50.42
 ```
 
 Open Bambu Studio / OrcaSlicer → your printer appears within 10 seconds.
