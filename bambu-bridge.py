@@ -13,6 +13,7 @@ License: MIT
 
 import argparse
 import logging
+import os
 import signal
 import socket
 import struct
@@ -20,8 +21,8 @@ import sys
 from typing import Set
 
 # config
-SOURCE_IFACE = "lan1.50"   # Printer-side VLAN interface
-TARGET_IFACE = "lan1.10"   # Client-side VLAN interface
+SOURCE_IFACE = os.environ.get("SOURCE_IFACE", "lan1.50")   # Printer-side VLAN interface
+TARGET_IFACE = os.environ.get("TARGET_IFACE", "lan1.10")   # Client-side VLAN interface
 
 BAMBU_PORTS: Set[int] = {2021, 1900}
 BROADCAST_ADDR = "255.255.255.255"
@@ -70,10 +71,15 @@ def main() -> None:
     group.add_argument("-v", "--verbose", action="store_true", help="Show detailed packet information including full hex dump")
     args = parser.parse_args()
 
-    # set logging level
+    # set logging level (CLI flags take precedence over LOG_LEVEL env var)
+    log_level_env = os.environ.get("LOG_LEVEL", "").lower()
     if args.quiet:
         logger.setLevel(logging.STATUS)  # status level is always visible
     elif args.verbose:
+        logger.setLevel(logging.DEBUG)
+    elif log_level_env == "quiet":
+        logger.setLevel(logging.STATUS)
+    elif log_level_env == "verbose":
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
