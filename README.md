@@ -81,7 +81,7 @@ docker run -d \
   --cap-add NET_ADMIN \
   -e SOURCE_IFACE=lan1.50 \
   -e TARGET_IFACE=lan1.10 \
-  ghcr.io/hadronzoo/bambu-bridge:main
+  ghcr.io/hadronzoo/bambu-bridge:latest
 ```
 
 **Required flags:**
@@ -111,7 +111,7 @@ docker logs -f bambu-bridge
 ```yaml
 services:
   bambu-bridge:
-    image: ghcr.io/hadronzoo/bambu-bridge:main
+    image: ghcr.io/hadronzoo/bambu-bridge:latest
     restart: unless-stopped
     network_mode: host
     cap_add:
